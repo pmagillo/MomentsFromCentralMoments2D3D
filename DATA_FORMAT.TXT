@@ -1,0 +1,14 @@
+All data are text files with coordinates of the black
+(foreground) pixels or voxels.
+Coordinates are non-negative integers.
+
+====2D DATA
+
+FileMpeg/*
+FileScaledMpeg/*
+   Coordinates are pairs of integers
+
+====3D DATA
+
+FileSolid/*
+   Coordinates are triplets of integers
