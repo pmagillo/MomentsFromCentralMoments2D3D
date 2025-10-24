@@ -1,0 +1,111 @@
+# a) Experiments on MPEG images
+# they are with
+# OPT=0
+# OPT=1
+# OPT=2
+
+echo "Dog"
+for I in {01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20}
+do
+  python3 -m cProfile main_for_tests.py 2 0 FileMpeg/dog$I.txt 10 > out_dog$I_opt0
+1
+2
+done
+
+echo "Butterfly"
+for I in {01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20}
+do
+  python3 -m cProfile main.py FileMpeg/butterfly$I.txt 10 > out_butterfly$I_opt0
+  python3 -m cProfile main.py FileMpeg/butterfly$I.txt 10 > out_butterfly$I_opt1
+  python3 -m cProfile main.py FileMpeg/butterfly$I.txt 10 > out_butterfly$I_opt2
+done
+
+echo "Device0"
+for I in {01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20}
+do
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device0$I.txt 10 > out_device0$I_opt0
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device0$I.txt 10 > out_device0$I1
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device0$I.txt 10 > out_device0$I2
+done
+
+echo "Device3"
+for I in {01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20}
+do
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device3$I.txt 10 > out_device3$I_opt0
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device3$I.txt 10 > out_device3$I_opt1
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device3$I.txt 10 > out_device3$I_opt2
+done
+
+echo "Device6"
+for I in {01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20}
+do
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device6$I.txt 10 > out_device6$I_opt0
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device6$I.txt 10 > out_device6$I_opt1
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device6$I.txt 10 > out_device6$I_opt2
+done
+
+echo "Device9"
+for I in {01,02,03,04,05,06,07,08,09,10,11,12,13,14,15,16,17,18,19,20}
+do
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device9$I.txt 10 > out_device9$I_opt0
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device9$I.txt 10 > out_device9$I_opt1
+  python3 -m cProfile main_for_tests.py 2 0  FileMpeg/device9$I.txt 10 > out_device9$I_opt2
+done
+
+# b) Experiments on Scaled MPEG images
+# they are only with
+# OPT=2
+
+for I in {0500,1000}
+do
+  echo "dog_"$I
+  python3 -m cProfile main_for_tests.py 2 2   FileScaledMpeg/dog_$I.txt 10 > out_dog_$I
+  echo "butterfly_"$I
+  python3 -m cProfile main_for_tests.py 2 2  FileScaledMpeg/butterfly_$I.txt 10 > out_butterfly_$I
+  echo "device0_"$I
+  python3 -m cProfile main_for_tests.py 2 2  FileScaledMpeg/device0_$I.txt 10 > out_device0_$I
+  echo "device3_"$I
+  python3 -m cProfile main_for_tests.py 2 2  FileScaledMpeg/device3_$I.txt 10 > out_device3_$I
+  echo "device6_"$I
+  python3 -m cProfile main_for_tests.py 2 2  FileScaledMpeg/device6_$I.txt 10 > out_device6_$I
+  echo "device9_"$I
+  python3 -m cProfile main_for_tests.py 2 2  FileScaledMpeg/device9_$I.txt 10 > out_device9_$I
+done
+
+for I in {2000,4000}
+do
+  echo "dog_"$I
+  python3 -m cProfile main_for_tests.py 2 2  FileScaledMpeg/dog_$I.txt 5 > out_dog_$I
+  echo "butterfly_"$I
+  python3 -m cProfile main_for_tests.py 2 2  FileScaledMpeg/butterfly_$I.txt 5 > out_butterfly_$I
+  echo "device0_"$I
+  python3 -m cProfile main_for_tests.py 2 2  FileScaledMpeg/device0_$I.txt 5 > out_device0_$I
+  echo "device3_"$I
+  python3 -m cProfile main_for_tests.py 2 2  FileScaledMpeg/device3_$I.txt 5 > out_device3_$I
+  echo "device6_"$I
+  python3 -m cProfile main_for_tests.py 2 2  FileScaledMpeg/device6_$I.txt 5 > out_device6_$I
+  echo "device9_"$I
+  python3 -m cProfile main_for_tests.py 2 2  FileScaledMpeg/device9_$I.txt 5 > out_device9_$I
+done
+
+# c) Experiments on MPEG images, with amortized preprocessing
+# they are with 
+# OPT=2 once
+
+echo "amortized Mpeg (all)"
+python3 main_for_tests.py 2 2 once listaMpeg 705 10 > out_2D_mpeg
+echo "amortized Mpeg (device3,device9)"
+python3 main_for_tests.py 2 2 once listaDevice39 558 10 > out_2D_device39
+
+# d) Experiments on Scaled MPEG images, with amortized preprocessing
+# they are with 
+# OPT=2 once
+
+echo "max side 500"
+python3  main_for_tests.py 2 2 once lista0500 500 10 > out_2D_0500
+echo "max side 1000"
+python3 main_for_tests.py 2 2 once lista1000 1000 10 > out_2D_1000
+echo "max side 2000"
+python3 main_for_tests.py 2 2 once lista2000 2000 10 > out_2D_2000
+echo "max side 4000"
+python3 main_for_tests.py 2 2 once lista4000 4000 10 > out_2D_4000

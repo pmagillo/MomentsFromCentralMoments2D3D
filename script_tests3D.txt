@@ -1,0 +1,33 @@
+# a) Experiments on Solid images
+# they are with
+# OPT=2
+
+for I in {64,128,256}
+do
+  echo "============== "$I" ================="
+  echo "BLOCK "
+  echo FileSolid/"block"$I"_cubes.txt"
+  python3 -m cProfile main_for_tests.py 3 2 FileSolid/"block"$I"_cubes.txt" 10 > out_block$I
+  echo "BUMPYTORUS"
+  python3 -m cProfile main_for_tests.py 3 2 FileSolid/"bumpytorus"$I"_cubes.txt" 10 > out_bumpytorus$I
+  echo "CAMEL"
+  python3 -m cProfile main_for_tests.py 3 2 FileSolid/"camel"$I"_cubes.txt" 10 > out_camel$I
+  echo "CUP"
+  python3 -m cProfile main_for_tests.py 3 2 FileSolid/"cup"$I"_cubes.txt" 10 > out_cup$I
+  echo "PEGASUS"
+  python3 -m cProfile main_for_tests.py 3 2 FileSolid/"pegasus"$I"_cubes.txt" 10 > out_pegasus$I
+  echo "TEAPOT"
+  python3 -m cProfile main_for_tests.py 3 2 FileSolid/"teapot"$I"_cubes.txt" 10 > out_teapot$I
+done
+
+# b) Experiments on Solid images, with amortized preprocessing
+# they are with 
+# OPT=2 once
+
+echo "max side 64"
+python3 -m cProfile main_for_tests.py 3 2 once lista3D_64 64 10 > out_3D_64
+echo "max side 128"
+python3 -m cProfile main_for_tests.py 3 2 once lista3D_128 128 10 > out_3D_128
+echo "max side 256"
+python3 -m cProfile main_for_tests.py 3 2 once lista3D_256 256 10 > out_3D_256
+
