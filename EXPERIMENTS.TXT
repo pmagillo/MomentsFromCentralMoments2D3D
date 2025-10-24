@@ -1,0 +1,39 @@
+EXPERIMENTS
+
+====Data
+
+Experiments are performed on 3 data sets:
+
+1)
+6 classes of 2D images from
+https://dabi.temple.edu/external/shape/MPEG7/MPEG7dataset.zip
+(20 images in each class)
+
+we exchanged black and white to have black foreground
+and we converted to text format (in order to process them with basic 
+python without extra packages and conform to 3D format)
+
+Inputs are in folder: FileMpeg
+
+2)
+1 2D image from each of the six classes, rescaled
+to have side length = 500,1000,2000,4000 pixels
+
+Input are in folder: FileScaledMpeg
+
+3)
+We considered six 3D shapes from the repository that was available
+at  http://visionair.ge.imati.cnr.it/ (downloaded in 2022, the
+address is no longer working).
+
+Each shape (given as closed triangle mesh) was discretized into
+a 3D image with side length = 64,128,256
+
+Input are in folder: FileSolid
+
+====Tests
+
+Tests are described in files 
+script_tests2D.txt  for 2D images (FileMpeg and FileScaledMpeg)
+script_tests3D.txt  for 3D images (FileSolid)
+
