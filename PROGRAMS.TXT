@@ -1,0 +1,59 @@
+====Purpose
+
+The purpose of this software is computing the moments of 
+order up to three on 2D and 3D images.
+
+The pythode implements state-of-the-art methods based
+on tree (quadtree in 2D, octree in 3D) and block decomposition,
+and our improved version which precomputes centra moments.
+
+====List of source files
+
+bigmatrix.py  data structure for precomputed sums of powers
+              (used with block decomposition methods)
+commons2D.py  basic I/O functions for 2D images
+commons3D.py  basic I/O functions for 3D images
+
+octree.py     data structure and computation of 2D quadtree
+quadtree.py   data structure and computation of 3D octree
+spiliotis2D.py  data structure and computation of
+                2D block decomposition
+spiliotis3D.py  data structure and computation of
+                3D block decomposition
+
+momentBlock2D.py  moment computation with
+                  2D block decomposition, state-of-the-art
+momentBlock3D.py  moment computation with
+                  3D block decomposition, state-of-the-art
+momentBlockNew2D.py moment computation with
+                    2D block decomposition, our version
+momentBlockNew3D.py moment computation with
+                    3D block decomposition, our version
+momentTree2D.py   moment computation with
+                  2D quadtree, state-of-the-art
+momentTree3D.py   moment computation with
+                  3D octree, state-of-the-art
+momentTreeNew2D.py  moment computation with
+                    2D quadtree, our version
+momentTreeNew3D.py  moment computation with
+                    3D octree, our version
+
+main_for_tests.py  for executing the tests
+                   (see file EXPERIMENTS.TXT)
+
+====References
+
+For moment computation based on quadtree/octree:
+- C.H. Wu, S.J. Horng, P.Z. Lee,
+  A new computation of shape moments via quadtree decomposition,
+  Pattern Recognition 34(7), 2001, 1319--1330.
+
+For moment computation based on block decomposition:
+- I.M. Spiliotis, B.G. Mertzios, 
+  Real-time computation of 2-D moments on block represented binary
+  images on the scan line array processor,
+  8th European Signal Processing Conference, EUSIPCO, 1996, pp. 1--4.
+- I.M. Spiliotis, B.G. Mertzios, 
+  Real-time computation of two-dimensional moments on binary
+  images using image block representation, 
+  IEEE Trans.  Image Processing 7(11), 1998, 1609--1615.
