@@ -1,4 +1,3 @@
-
 """
 The quadtree encodes a 2D image of size LxL where
 L = 2^E for some natural E.
@@ -75,18 +74,14 @@ class QTR_Node:
     return 2**self.exponent
 
   def __str__(self):
-      S = str()
-      S = S+"Node "+str((self.xmin,self.ymin))+" -- "
-      S = S+str((self.xmin+self.side()-1,self.ymin+self.side()-1))
-      #S = S +"; colore "+str(self.color)
-      return S
+      return str(self.xmin)+' '+str(self.ymin)+' '+str(self.exponent)
  
 def power_of_two(L1, L2):
   """
   Return the exponent E of the minimum power of two
   which is greater then or equal to L1 and L2.
   L1, L2 must be positive integers (they are the
-  lengths of the three sides of the iumage).
+  lengths of the three sides of the image).
   """
   L = 1
   E = 0
@@ -148,8 +143,8 @@ class QTR_Tree:
     x,y = 0,0
     for e in loc_code:
       s = s//2
-      if e in (1,3): x += s
-      if e in (2,3): y += s
+      if e in (1,3): y += s
+      if e in (2,3): x += s
     return (x,y)
   
   def code_for_pixel(self,x,y):
@@ -182,162 +177,80 @@ class QTR_Tree:
 
   def print_me(self, filename):
     F = open(filename,'w')
+    F.write(str(self.x_side)+' '+str(self.y_side)+'\n')
+    F.write(str(self.exponent)+'\n')
+    F.write(str(self.side)+'\n')
     for C in self.leaves:
        if self.leaves[C].color==1:
-          F.write(str(self.leaves[C])+'\n')
+          s = ""
+          for digit in C: s = s+str(digit)
+          F.write(str(s)+'\n')
+          #F.write(str(s)+' '+str(self.leaves[C])+'\n')
     F.close()
-    
-def stampa(Q):
-  print("Dimensioni ",Q.x_side, Q.y_side)
-  print("Esponente ",Q.exponent)
 
-  print("Foglie:")
-  for aa,bb in zip(Q.leaves.keys(),Q.leaves.values()):
-      print("  ",aa," --> ",bb)   
+def readCode(thestring):
+  return tuple([int(c) for c in thestring])
+  
 
-  NERI = [C for C in sorted(Q.leaves) if Q.leaves[C].color==1]
-  BIAN = [C for C in sorted(Q.leaves) if Q.leaves[C].color==0]
-  print("Foglie bianche")
-  for C in BIAN:
-    node = Q.leaves[C]
-    #print("Nodo ",C," min coord ",Q.min_pixel(C), " lato ",Q.node_side(C))
-    print("Nodo ",C," min coord ",node.xmin,node.ymin," lato ",node.side())
-  print("Foglie nere")
-  for C in NERI:
-    node = Q.leaves[C]
-    #print("Nodo ",C," min coord ",Q.min_pixel(C), " lato ",Q.node_side(C))
-    print("Nodo ",C," min coord ",node.xmin,node.ymin," lato ",node.side())
+def readQuadtree(filename):
+    F = open(filename,'r')
+    SX, SY = [int(p) for p in F.readline().split()]
+    newtree = QTR_Tree(SX, SY)
+    newtree.exponent = [int(p) for p in F.readline().split()][0]
+    newtree.side = [int(p) for p in F.readline().split()][0]
+    newtree.leaves = dict()
+    for L in F:
+      parts = L.split()
+      C = readCode(parts[0]) #location code
+      x0, y0 = newtree.min_pixel(C)
+      side = newtree.node_side(C)
+      expon = newtree.exponent - len(C)
+      newtree.leaves[C] = QTR_Node(x0,y0, expon, 1)
+    F.close()
+    return newtree
 
-def quadtreeBuild(SX,SY, black_pixels=[]):
+
+def buildQuadtree(IMG):
   """
-  Build the quadtree for the given 2D image
-  which covers the square [0,SX-1] x [0,SY-1]
-  and whose black pixels are contained in the list
-  black_pixels, the other pixels are white.
+  Build the quadtree for the given 2D image.
   """
-  Q = QTR_Tree(SX, SY)
+  Q = QTR_Tree(IMG.dimX, IMG.dimY)
   Qside = 2**Q.exponent
-  #print("Costruisco quadtree di lato ",Qside)
   #keep a queue of location codes that are candidate to
   #be merged into a parent node
   candid = []
   #remove the root and add all individual black pixels as leaves
   del Q.leaves[()]
-  #print("Appena cancellata root, foglie=",Q.leaves)
-  for x,y in black_pixels:
-    C = Q.code_for_pixel(x,y)
-    Q.leaves[C] = QTR_Node(x,y)
-    Q.leaves[C].color = 1
-    if C[-1]==0: candid.append(parent(C))
-    #if (len(Q.leaves)%100)==0: print(" Ora ci sono ",len(Q.leaves)," nodi")
-
-  #print("Foglie messe (solo le nere), adesso provo a fondere")
+  for x in range(IMG.dimX):
+    for y in range(IMG.dimY):
+      if IMG.get(x,y)==1:
+        C = Q.code_for_pixel(x,y)
+        Q.leaves[C] = QTR_Node(x,y)
+        Q.leaves[C].color = 1
+        if C[-1]==0: candid.append(parent(C))
   
   #scan the queue and try to merge nodes
   I = 0
   while I<len(candid):
     C = candid[I]
     I += 1
-    #print("Provo a fondere i figli di ",C) ###C tupla loc code
     present = [(C+(i,) in Q.leaves) for i in range(4)]
-    #print("   Tutti presenti",present)
-    #qqq = input("Un tasto")
     if False in present: continue
-    #se ci sono tutti, sono tutti neri
+    #all present implies all black
     children = [Q.leaves[C+(i,)] for i in range(4)]
-    #print("   Allora fondo")
     #the eight children have equal color, so merge them
     for i in range(4): del Q.leaves[C+(i,)]
-    #determina punto di aggancio come baricentro
-    xx = children[0].xmin #0.25*sum([children.x for i in range(4)])
-    yy = children[0].ymin #0.25*sum([children.y for i in range(4)])
+    #anchor point
+    xx = children[0].xmin
+    yy = children[0].ymin
     Q.leaves.update({C: QTR_Node(xx,yy, children[0].exponent+1, 1 )})
-    #print("Ho messo nodo con location code", C)
-    #print("Appena aggiornato, foglie=")
-    #for aa,bb in zip(Q.leaves.keys(),Q.leaves.values()): print(aa,bb)   
     if C[-1]==0: candid.append(parent(C))
   return Q
 
-def Funziona_ma_lento_quadtreeBuild(SX,SY, black_pixels=[]):
-  """
-  Build the quadtree for the given 2D image
-  which covers the square [0,SX-1] x [0,SY-1]
-  and whose black pixels are contained in the list
-  black_pixels, the other pixels are white.
-  """
-  Q = QTR_Tree(SX, SY)
-  Qside = 2**Q.exponent
-  #print("Costruisco quadtree di lato ",Qside)
-  #keep a queue of location codes that are candidate to
-  #be merged into a parent node
-  candid = []
-  #remove the root and add all individual pixels, white
-  del Q.leaves[()]
-  #print("Appena cancellata root, foglie=",Q.leaves)
-  for x in range(0,Qside):
-     for y in range(0,Qside): 
-          C = Q.code_for_pixel(x,y)
-          #print(" metto ",x,y, " codice ",C)
-          Q.leaves.update({C: QTR_Node(x,y)})
-          if (x,y) in black_pixels: Q.leaves[C].color = 1 #****************
-          if C[-1]==0: candid.append(parent(C))
-          #if (len(Q.leaves)%100)==0: print(" Ora ci sono ",len(Q.leaves)," nodi")
-  #print("Appena messi tutti bianchi, foglie=")
-  #for aa,bb in zip(Q.leaves.keys(),Q.leaves.values()): print(aa,bb)
-  #print(" e candidati ",candid)
-  #print("Num foglie:",  len(Q.leaves))
-  #print("Qtree edge:",Qside)
-  #assert len(Q.leaves)==(Qside*Qside)
-  #replace the color of all pixels in the list
-  """
-  **************** ALTERNATIVO A SOPRA
-  for x,y in black_pixels:
-    C = Q.code_for_pixel(x,y)
-    Q.leaves[C].color = 1
-  """
-  #print("Appena messi anche i neri, foglie=")
-  #for aa,bb in zip(Q.leaves.keys(),Q.leaves.values()): print(aa,bb)
-  #assert len(Q.leaves)==(Qside*Qside)
-
-  #print("Foglie messe, adesso provo a fondere")
-  
-  #scan the queue and try to merge nodes
-  I = 0
-  while I<len(candid):
-    C = candid[I]
-    I += 1
-    #print("Provo a fondere i figli di ",C) ###C tupla loc code
-    present = [(C+(i,) in Q.leaves) for i in range(4)]
-    #qqq = input("Un tasto")
-    if False in present: continue
-    children = [Q.leaves[C+(i,)] for i in range(4)]
-    child_col = [children[i].color for i in range(4)]
-    if len(set(child_col))==1:
-      #print("   Allora fondo")
-      #the eight children have equal color, so merge them
-      for i in range(4): del Q.leaves[C+(i,)]
-      #determina punto di aggancio come baricentro
-      xx = children[0].xmin #0.25*sum([children.x for i in range(4)])
-      yy = children[0].ymin #0.25*sum([children.y for i in range(4)])
-      Q.leaves.update({C: QTR_Node(xx,yy, children[0].exponent+1,child_col[0])})
-      #print("Ho messo nodo con location code", C)
-      #print("Appena aggiornato, foglie=")
-      #for aa,bb in zip(Q.leaves.keys(),Q.leaves.values()): print(aa,bb)   
-      if C[-1]==0: candid.append(parent(C))
-  return Q
-
-def buildQuadtree(black_pixels):
-  """
-  Build and return the quadtree for the 2D image 
-  given as list of black squares.
-  """
-  maxX = 1+max([c[0] for c in black_pixels])
-  maxY = 1+max([c[1] for c in black_pixels])
-  return quadtreeBuild(maxX, maxY, black_pixels)
 
 #---------------------MAIN-----------------------
 
-from commons2D import readPixels
+from reading2D import adaptiveRead as readInput
 import sys
 
 def main(arg):
@@ -346,11 +259,11 @@ def main(arg):
 
     else:
          print("---Read pixels from file "+ arg[1])
-         input_pixels = readPixels(arg[1])
-         QT = buildQuadtree(input_pixels)
-         print("Number of black nodes: ",QT.num_elem())
+         input_image = readInput(arg[1])
+         QT = buildQuadtree(input_image)
+         print("Number of black leaves: ",QT.num_elem())
          QT.print_me("builtqtree_out.txt")
-         print("Nodi stampati su builtqtree_out.txt")
+         print("Leaves saved to builtqtree_out.txt")
 
 if __name__ == "__main__":
    main(sys.argv)
