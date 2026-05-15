@@ -1,14 +1,21 @@
-All data are text files with coordinates of the black
-(foreground) pixels or voxels.
-Coordinates are non-negative integers.
+INPUT DATA FORMATS FOR 2D IMAGES
 
-====2D DATA
+The programs process binary 2D and 3D images.
+There are only two colors: 1 = foreground, 0 = background.
 
-FileMpeg/*
-FileScaledMpeg/*
-   Coordinates are pairs of integers
+2D images are accepted in the standard image formats (png,jpg).
+If the image is not binary, it is converted to binary by applying
+a threshold.
 
-====3D DATA
+A raw binary data format is also accepted. The file is binary,
+the first four bytes are the two image dimensions (on 2 bytes each,
+in little-endian byte order). Next, we have the colors of the pixels,
+on one byte each.
 
-FileSolid/*
-   Coordinates are triplets of integers
+3D images are accepted in (binary or ascii) vtk format with
+DATASET STRUCTURED_POINTS and scalars associated with cells.
+
+A raw binary data format is also accepted. The file is binary,
+the first six bytes are the three image dimensions (on 2 bytes each,
+in little-endian byte order). Next, we have the colors of the voxels,
+on one byte each.
