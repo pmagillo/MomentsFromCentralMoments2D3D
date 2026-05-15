@@ -2,22 +2,6 @@
 Common functions to all 3D methods.
 """
 
-def readCubes(file_name):
-  """
-  Read from file the coordinates of the full cubes
-  and return them in list of ternes.
-  """
-  ternes = []
-  f = open(file_name,"r")
-  for L in f:
-    coord = L.split()
-    if len(coord)==0: continue
-    x,y,z = [int(c) for c in coord]
-    ternes.append((x,y,z))
-  f.close()
-  return ternes
-
-
 def printMoments(MOME):
   #print("Momenti su quadtree con algoritmo di Wu et al.")
   #print(type(black_cubes))
@@ -33,6 +17,8 @@ orders = orders + [(1,1,0),(1,0,1),(0,1,1),(2,0,0),(0,2,0),(0,0,2)]
 orders = orders + [(0,1,2),(0,2,1),(1,2,0),(1,0,2),(2,0,1),(2,1,0)]
 orders = orders + [(3,0,0),(0,3,0),(0,0,3),(1,1,1)]
 
+from reading3D import adaptiveRead as readInput
+
 def main(arg, decomposF, preprocF, momentsF, title):
    """
    Apply the function decompF to build a decomposition of the 3D
@@ -47,9 +33,9 @@ def main(arg, decomposF, preprocF, momentsF, title):
 
    else:
         print("---Read cubes from file "+ arg[1])
-        input_cubes = readCubes(arg[1])
-        print("Number of black voxels:", len(input_cubes))
-        elements = decomposF(input_cubes)
+        input_image = readInput(arg[1])
+        print("Number of black voxels:", input_image.number(1))
+        elements = decomposF(input_image)
         print("Number of black elements:", elements.num_elem())
         if hasattr(elements,"max_triplet"):
            print("Max sides:", elements.max_triplet())
