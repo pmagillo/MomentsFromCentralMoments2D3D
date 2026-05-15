@@ -1,3 +1,8 @@
+"""
+Computation of moments of a 3D image on the octree
+according to  Wu, Horng and Lee, but
+with the new idea that precomputes central moments.
+"""
 from commons3D import orders
 from octree import OCT_Tree
 
@@ -27,7 +32,6 @@ def setCentralMoments(max_side):
       sqr_edge = edge*edge;
       CentrMom0.append(edge*sqr_edge) # mu_000=edge^3
       CentrMom2.append(int(2*sqr_edge*sommaQ))
-      #print("Per ",edge," viene ",CentrMom2[-1])
       prev_edge = edge
       edge *= 2
   return (CentrMom0, CentrMom2)
@@ -50,8 +54,6 @@ def octreeMoments(OT):
     node = OT.leaves[node] 
     if node.color==0: continue
     x,y,z = node.xcen, node.ycen, node.zcen
-    #s = node.side()
-    #print("Nodo con baricentro ",x,y, " indice",node.exponent)
     m000 = stored0[node.exponent]
     #
     m100 = x*m000
