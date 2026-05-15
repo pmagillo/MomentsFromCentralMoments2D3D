@@ -51,7 +51,7 @@ class BW_Block:
       return self.x0==b.x0 and self.x1==b.x1 and self.y0==b.y0 and self.y1==b.y1
 
   def __str__(self):
-      return "Block "+str((self.x0,self.y0,self.z0))+" -- "+str((self.x1,self.y1,self.z1))
+      return str(self.x0)+' '+str(self.y0)+' '+str(self.z0)+' '+str(self.x1)+' '+str(self.y1)+' '+str(self.z1)
 
   def pixel_num(self):
       """
@@ -100,17 +100,38 @@ class BW_BlockImage3D:
        max_deltaZ = max(max_deltaZ,b.z1-b.z0+1)
      return (max_deltaX,max_deltaY,max_deltaZ)
 
-  def statistiche(self):
+  def print_me(self, filename):
+    F = open(filename,'w')
+    F.write(str(self.origsize)+'\n')
+    for N in self.block:
+      F.write(str(N)+'\n')
+    F.close()
+
+  def statistics(self):
      dim_uno = 0
      dim_piccole = 0 
      soglia = 7
      for b in self.block:
-       if b.x1-b.x0<soglia and b.y1-b.y0<soglia and b.z1-b.z0<soglia:
+       dimens = sorted([b.x1-b.x0,b.y1-b.y0,b.z1-b.z0])
+       if dimens[1]<1 and dimens[2]<soglia:
          dim_piccole += 1
        if b.x1==b.x0 or b.y1==b.y0 or b.z1==b.z0:
          dim_uno += 1
-     print("Di",len(self.block),"blocchi: hanno spessore 1 in",dim_uno," e dimensioni<8 in",dim_piccole)
+     print("Of",len(self.block),"blocks:",dim_uno,"have width=1,",dim_piccole,"have width<8, height<2")
      print("Max dimens: ",self.max_triplet())
+
+def readBlocks(filename):
+  F = open(filename,'r')
+  size = [int(s) for s in F.readline().split()][0]
+  decomp = BW_BlockImage3D()
+  decomp.origsize = size
+  for L in F:
+    x0, y0, z0, x1, y1, z1 = [int(p) for p in L.split()]
+    B = BW_Block()
+    B.set(x0,y0,z0, x1,y1,z1)
+    decomp.add_block(B)
+  F.close()
+  return decomp
      
 
 #---------------------DECOMPOSITION-----------------------
@@ -121,7 +142,6 @@ def extractSliceBlocks(IMG, SX, SY, z):
   Create the blocks for the 2D slice with given z.
   """
   #print("==================FORMO BLOCCHI DELLA FETTA z=",z)
-  num = 0
   # Array used to store in-progress blocks. 
   # The array is indexed on x1.
   # For all used x, either block[x]=None or block[x].x1 = x.
@@ -134,127 +154,92 @@ def extractSliceBlocks(IMG, SX, SY, z):
      start_x = 0 # start of run
      inside_run = False # are we in a run? initially no 
      for x in range(SX+1):
-         #print("===Processo pixel ",(x,y,z))
-         if inside_run and not ((x,y,z) in IMG):
-           #print("Fine run al pixel nero ",(x-1,y,z))
+         if inside_run and IMG.get(x,y,z)==0:
            #the run ended at x-1, and certainly x>0 because initially inside_run is off
            inside_run = False
            #if there is an in-progress block ending at x-1
            if temp_block[x-1]!=None:
            #if this block starts at start_x and extends up to previous y, then extend the block
               if (temp_block[x-1].x0==start_x) and (temp_block[x-1].y1==y-1):
-                #print("   aggiorno blocco ",temp_block[x-1])
                 temp_block[x-1].y1 = y
               else: #write the block and overwrite it 
-                #print("   salvo blocco ",temp_block[x-1])
                 slice.add_block(BW_Block(temp_block[x-1]))
                 temp_block[x-1].set(start_x,y,z, x-1,y,z)
-                num += 1
            else: # there is not an in-progress block ending at x-1, set a new block
              temp_block[x-1] = BW_Block()
              temp_block[x-1].set(start_x,y,z, x-1,y,z)
-             #print("   creo blocco ", temp_block[x-1]);
-         elif (not inside_run) and ((x,y,z) in IMG):
-            #print("Inizio run al pixel nero ",(x,y,z))
+         elif (not inside_run) and IMG.get(x,y,z)==1:
             # we start being inside a run 
             start_x = x
             inside_run = True
       # the row ended, if we are stil inside a run, then a block ends at x=SX 
      if inside_run:
-        #print("Fine riga col nero a",(SX,y,z))
         if temp_block[SX]!=None:
           #if this block starts at start_x and extends up to previous y, then extend the block
           if (temp_block[SX].x0==start_x) and (temp_block[SX].y1==y-1):
             temp_block[SX].y1 = y
             temp_block[SX].z1 = z
-            #print("   aggiorno blocco ", temp_block[SX])
           else: # write the block and overwrite it
-            #print("   salvo blocco ", temp_block[SX])
             slice.add_block(BW_Block(temp_block[SX]))
             temp_block[SX].set(start_x,y,z, SX,y,z)
-            num += 1
-            #print("   e aggiorno ", temp_block[SX])
         else: # there is not an in-progress block ending at SX, set a new one
           temp_block[SX] = BW_Block()
           temp_block[SX].set(start_x,y,z, SX,y,z)
-          #print("   creo blocco ", temp_block[SX])
   # end for y
   #now write all remaining in-progress blocks
   for x in range(SX+1):
      if temp_block[x]!=None:
-        #print("salvo blocco pendente ",x, temp_block[x])
         slice.add_block(BW_Block(temp_block[x]))
-        num += 1
-  #print("Number of blocks in slice z=",z, ": ",slice.size(),"\n")
   return slice
   
-def extractBlocks(black_cubes):
+def extractBlocks(IMG):
   """
   Build the decomposition into blocks from a 3D image given
   as a list of black cubes, and return it.
   """
-  # Convert the image from list of black voxels to 
-  # a dictionary with key=(x,y,z) and value =1
-  IMG = dict([(c,1) for c in black_cubes])
-  SX = max([c[0] for c in black_cubes])
-  SY = max([c[1] for c in black_cubes])
-  SZ = max([c[2] for c in black_cubes])
-  num = 0
+  #####num = 0
   # Array used to store in-progress blocks of the previous slice
   # The array is indexed on x1.
   # For all used x, either block[x]=None or block[x].x1 = x.
-  temp_block = [None for i in range(SX+1)]
+  temp_block = [None for i in range(IMG.dimX+1)]
   # Result to be returned
   final_blocks = BW_BlockImage3D()
-  final_blocks.origsize = max([SX,SY,SZ])
+  final_blocks.origsize = max([IMG.dimX,IMG.dimY,IMG.dimZ])
 
-  for z in range(SZ+1):
-      slice_blocks = extractSliceBlocks(IMG, SX, SY, z)
+  for z in range(IMG.dimZ+1):
+      slice_blocks = extractSliceBlocks(IMG, IMG.dimX, IMG.dimY, z)
       #CHECK SLICE
       #checkBlocks(slice_blocks,[c for c in black_cubes if c[2]==z])
-      #print("======Blocchi fetta z=",z," vanno bene")
-      #print("======FUSIONE")
+      #Try to merge with previous slice
       for BL in slice_blocks.all_blocks():
-           #print("===Guardo se posso fondere il blocco ",BL)
            x = BL.x1+1
            if temp_block[x-1]!=None:
                if temp_block[x-1].has_equal_xy(BL):
-                  #print("   si: fondo con blocco ",temp_block[x-1])
                   temp_block[x-1].z1 = z
                else: #write the block and overwrite it 
                   for xx in range(BL.x0,BL.x1+1):
                      if temp_block[xx]!=None:
-                        #print("   no: salvo blocco ",temp_block[xx])
                         final_blocks.add_block(BW_Block(temp_block[xx]))
                         temp_block[xx] = None
                   temp_block[x-1] = BL
-                  num += 1
-                  #print("   e aggiorno ", temp_block[x-1])
            else: # there is not an in-progress block ending at x-1, set a new block
                for xx in range(BL.x0,BL.x1+1):
                   if temp_block[xx]!=None:
-                     #print("   no: salvo blocco ",temp_block[xx])
                      final_blocks.add_block(BW_Block(temp_block[xx]))
                      temp_block[xx] = None
                temp_block[x-1] = BL
-               #print("   creo blocco ", temp_block[x-1]);
       # end for BL
-      for x in range(SX+1):
+      for x in range(IMG.dimX+1):
         if temp_block[x]!=None and temp_block[x].z1==z-1:
           # this block finishes at z-1 and has no chance to be merged
           # with the new block that will be built on next slice
-          #print("salvo blocco pendente z-1",temp_block[x])
           final_blocks.add_block(BW_Block(temp_block[x]))
           temp_block[x] = None
-          num += 1   
   # end for z
   #now write all remaining in-progress blocks
-  for x in range(SX+1):
+  for x in range(IMG.dimX+1):
      if temp_block[x]!=None:
-        #print("salvo blocco pendente finale",temp_block[x])
         final_blocks.add_block(BW_Block(temp_block[x]))
-        num += 1
-  #print("Number of blocks = ",final_blocks.size())
   return final_blocks
 
 def checkBlocks(ibr, img):
@@ -298,7 +283,7 @@ def checkBlocks(ibr, img):
 
 #---------------------MAIN-----------------------
 
-from commons3D import readCubes
+from reading3D import adaptiveRead as readInput
 import sys
 
 def main(arg):
@@ -307,11 +292,13 @@ def main(arg):
 
     else:
          print("---Read cubes from file "+ arg[1])
-         input_cubes = readCubes(arg[1])
-         BB = extractBlocks(input_cubes)
+         input_image = readInput(arg[1])
+         BB = extractBlocks(input_image)
          #checkBlocks(BB, input_cubes)
          print("Number of blocks: ",BB.num_elem())
-         BB.statistiche()
+         BB.statistics()
+         BB.print_me("decomposition_out.txt")
+         print("Blocks saved to decomposition_out.txt")
 
 if __name__ == "__main__":
    main(sys.argv)
