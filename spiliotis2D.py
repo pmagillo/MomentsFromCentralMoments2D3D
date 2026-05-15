@@ -45,7 +45,7 @@ class BW_Block:
       return self.x0==b.x0 and self.x1==b.x1 and self.y0==b.y0 and self.y1==b.y1
 
   def __str__(self):
-      return "Block "+str((self.x0,self.y0))+" -- "+str((self.x1,self.y1))
+      return str(self.x0)+' '+str(self.y0)+' '+str(self.x1)+' '+str(self.y1)
 
   def pixel_num(self):
       """
@@ -104,30 +104,42 @@ class BW_BlockImage2D:
 
   def print_me(self, filename):
     F = open(filename,'w')
+    F.write(str(self.origsize)+'\n')
     for N in self.block:
       F.write(str(N)+'\n')
     F.close()
 
-  def statistiche(self):
+  def statistics(self):
      dim_uno = 0
      dim_piccole = 0 
      soglia = 7
      for b in self.block:
-       if b.x1-b.x0<soglia and b.y1-b.y0<soglia:
+       if b.x1-b.x0<soglia or b.y1-b.y0<soglia:
          dim_piccole += 1
        if b.x1==b.x0 or b.y1==b.y0:
          dim_uno += 1
-     print("Di",len(self.block),"blocchi: hanno spessore 1 in",dim_uno," e dimensioni<8 in",dim_piccole)
-     print("Max dimens: ",self.max_pair())
-     
+     print("Of",len(self.block),"blocks:",dim_uno,"have width=1,",dim_piccole,"have width<8")
+     print("Max dimensions: ",self.max_pair())
+
+def readBlocks(filename):
+  F = open(filename,'r')
+  size = [int(s) for s in F.readline().split()][0]
+  decomp = BW_BlockImage2D()
+  decomp.origsize = size
+  for L in F:
+    x0, y0, x1, y1 = [int(p) for p in L.split()]
+    B = BW_Block()
+    B.set(x0, y0, x1, y1)
+    decomp.add_block(B)
+  F.close()
+  return decomp
+
 #---------------------DECOMPOSITION------------------------
 
 def extractSliceBlocks(IMG, SX, SY):
   """
   Create the blocks for the 2D image.
   """
-  #print("==================FORMO BLOCCHI")
-  num = 0
   # Array used to store in-progress blocks. 
   # The array is indexed on x1.
   # For all used x, either block[x]=None or block[x].x1 = x.
@@ -140,75 +152,50 @@ def extractSliceBlocks(IMG, SX, SY):
      start_x = 0 # start of run
      inside_run = False # are we in a run? initially no 
      for x in range(SX+1):
-         #print("===Processo pixel ",(x,y))
-         if inside_run and not ((x,y) in IMG):
-           #print("Fine run al pixel nero ",(x-1,y))
+         if inside_run and IMG.get(x,y)==0:
            #the run ended at x-1, and certainly x>0 because initially inside_run is off
            inside_run = False
            #if there is an in-progress block ending at x-1
            if temp_block[x-1]!=None:
            #if this block starts at start_x and extends up to previous y, then extend the block
               if (temp_block[x-1].x0==start_x) and (temp_block[x-1].y1==y-1):
-                #print("   aggiorno blocco ",temp_block[x-1])
                 temp_block[x-1].y1 = y
               else: #write the block and overwrite it 
-                #print("   salvo blocco ",temp_block[x-1])
                 slice.add_block(BW_Block(temp_block[x-1]))
                 temp_block[x-1].set(start_x,y, x-1,y)
-                num += 1
            else: # there is not an in-progress block ending at x-1, set a new block
              temp_block[x-1] = BW_Block()
              temp_block[x-1].set(start_x,y, x-1,y)
-             #print("   creo blocco ", temp_block[x-1]);
-         elif (not inside_run) and ((x,y) in IMG):
-            #print("Inizio run al pixel nero ",(x,y))
+         elif (not inside_run) and IMG.get(x,y)==1:
             # we start being inside a run 
             start_x = x
             inside_run = True
       # the row ended, if we are stil inside a run, then a block ends at x=SX 
      if inside_run:
-        #print("Fine riga col nero a",(SX,y))
         if temp_block[SX]!=None:
           #if this block starts at start_x and extends up to previous y, then extend the block
           if (temp_block[SX].x0==start_x) and (temp_block[SX].y1==y-1):
             temp_block[SX].y1 = y
-            #print("   aggiorno blocco ", temp_block[SX])
           else: # write the block and overwrite it
-            #print("   salvo blocco ", temp_block[SX])
             slice.add_block(BW_Block(temp_block[SX]))
             temp_block[SX].set(start_x,y, SX,y)
-            num += 1
-            #print("   e aggiorno ", temp_block[SX])
         else: # there is not an in-progress block ending at SX, set a new one
           temp_block[SX] = BW_Block()
           temp_block[SX].set(start_x,y, SX,y)
-          #print("   creo blocco ", temp_block[SX])
   # end for y
   #now write all remaining in-progress blocks
   for x in range(SX+1):
      if temp_block[x]!=None:
-        #print("salvo blocco pendente ",x, temp_block[x])
         slice.add_block(BW_Block(temp_block[x]))
-        num += 1
-  #print("Number of blocks: ",slice.size(),"\n")
   return slice
   
-def extractBlocks(black_pixels):
+def extractBlocks(IMG):
   """
   Build the decomposition into blocks from a 2D image given 
   as a list of black pixels, and return it.
   """
-  # Convert the image from list of black voxels to 
-  # a dictionary with key=(x,y,z) and value =1
-  IMG = dict([(c,1) for c in black_pixels])
-  SX = max([c[0] for c in black_pixels])
-  SY = max([c[1] for c in black_pixels])
-  #num = 0
   # Result to be returned
-  final_blocks = extractSliceBlocks(IMG, SX, SY)
-  #CHECK
-  #checkBlocks(final_blocks, black_pixels)
-  #print("Number of blocks = ",final_blocks.size())
+  final_blocks = extractSliceBlocks(IMG, IMG.dimX, IMG.dimY)
   return final_blocks
 
 def checkBlocks(ibr, img):
@@ -242,14 +229,14 @@ def checkBlocks(ibr, img):
       for c in img:
            print("Error, black pixel ",c," not in block")
            OK = False
-   if OK: print("TUTTO VA BENE")
+   if OK: print("ALL CORRECT")
    else:
-      print("ERRORE")
+      print("ERROR")
       sys.exit(1)
 
 #---------------------MAIN-----------------------
 
-from commons2D import readPixels
+from reading2D import adaptiveRead as readInput
 import sys
 
 def main(arg):
@@ -258,13 +245,13 @@ def main(arg):
 
     else:
          print("---Read pixels from file "+ arg[1])
-         input_pixels = readPixels(arg[1])
-         BB = extractBlocks(input_pixels)
+         input_image = readInput(arg[1])
+         BB = extractBlocks(input_image)
          #checkBlocks(BB, input_pixels)
          print("Number of blocks: ",BB.num_elem())
          BB.print_me("decomposition_out.txt")
-         print("Nodi stampati su decomposition_out.txt")
-         BB.statistiche()
+         print("Blocks saved to decomposition_out.txt")
+         BB.statistics()
 
 if __name__ == "__main__":
    main(sys.argv)
