@@ -3,21 +3,21 @@ Computation of moments of a 3D image on the block
 decomposition by Spiliotis and Mertzios,
 with the new idea that precomputes central moments.
 
-Optimization level 0:
+Optimization level 0: (raw idea, slow)
 Compute all central moments of cuboids with
 dimX = 1...max width of a block
 dimY = 1...max height of a block
 dimZ = 1...max length of a block
 and dimX>=dimY>=DimZ
 
-Optimization level 1:
+Optimization level 1: (still slow)
 Compute all central moments of rectangles with
 dimX = 1...max width of a block
 dimY = 1...max height of a block
 dimZ = 1...max length of a block
 (given that max width>=max height>=max length, otherwise swap)
 
-Optimization level 2:
+Optimization level 2: (refined idea, good)
 Compute all central moments of rectangles with
 dimX = 1...max width of a block
 dimY = 1...min{8,max height of a block}
@@ -41,9 +41,9 @@ the traditional way
 
 from commons3D import orders
 
-from bigmatrix import PowerMatrix         #APRILE
-#Matrix storing precomputed sums of powers#APRILE
-powers = None                             #APRILE
+from bigmatrix import PowerMatrix
+#Matrix storing precomputed sums of powers
+powers = None
 
 OPT_LEVEL = 2
 LIMIT_Y, LIMIT_Z = 8,2
@@ -129,7 +129,6 @@ def setCentralMoments(max_side):
         CentrMom200[(edgeX,edgeY,edgeZ)] = 2*edgeY*edgeZ*sum_x[edgeX//2]
         CentrMom020[(edgeX,edgeY,edgeZ)] = 2*edgeX*edgeZ*sum_y[edgeY//2]
         CentrMom002[(edgeX,edgeY,edgeZ)] = 2*edgeX*edgeY*sum_z[edgeZ//2]
-        #print("c) set ",(edgeX,edgeY,edgeZ))
 
   return (CentrMom000, CentrMom200, CentrMom020, CentrMom002)
 
@@ -178,21 +177,16 @@ def blockMoments(ibr):
   # initialize moments to be computed
   MM = {key:0 for key in orders}
   
-  #print()
-  for p,q,r in orders:
-     MM[(p,q,r)] = 0 
-  
   global NUOVO
   global VECCHIO 
-  NUOVO,VECCHIO = 0,0 #APRILE
+  NUOVO,VECCHIO = 0,0
   
   for b in ibr.block: # cycle on blocks
 
      if OPT_LEVEL>1:
-       dimens = (b.x1-b.x0+1, b.y1-b.y0+1, b.z1-b.z0+1) #APRILE
+       dimens = (b.x1-b.x0+1, b.y1-b.y0+1, b.z1-b.z0+1)
        ordered = sorted(dimens)
-       if (ordered[1]>LIMIT_Y) or (ordered[0]>LIMIT_Z): #APRILE faccio al modo vecchio
-         #print("VECCHIO MODO",dimens,ordered)
+       if (ordered[1]>LIMIT_Y) or (ordered[0]>LIMIT_Z):
          for p,q,r in orders:
            if p==0: mx = dimens[0]
            else:
@@ -212,76 +206,63 @@ def blockMoments(ibr):
            if (mx or my or mz): MM[(p,q,r)] += (mx*my*mz)
          VECCHIO += 1
          continue
-     #FINE APRILE   
      
-     #print("NUOVO MODO",dimens,ordered)
      NUOVO += 1
      # barycenter
      xx = 0.5*(b.x1+b.x0)
      yy = 0.5*(b.y1+b.y0)
      zz = 0.5*(b.z1+b.z0)
-     #print("Momenti di ",b, " di ",b.pixel_num(), " pixel, baricentro ",(xx,yy,zz))
 
      # retrieve central moments of block
      if (b.x1-b.x0)>=(b.y1-b.y0) and (b.y1-b.y0)>=(b.z1-b.z0):
-               #print("  key xyz")
                key = (b.x1-b.x0+1, b.y1-b.y0+1, b.z1-b.z0+1)
                central000 = CC000[key]
                central200 = CC200[key]
                central020 = CC020[key]
                central002 = CC002[key]
      elif (b.x1-b.x0)>=(b.z1-b.z0) and (b.z1-b.z0)>=(b.y1-b.y0):
-               #print("  key xzy,  020:=002 e 022:=020 ")
                key = (b.x1-b.x0+1, b.z1-b.z0+1, b.y1-b.y0+1)
                central000 = CC000[key]
                central200 = CC200[key]
                central020 = CC002[key]
                central002 = CC020[key]
      elif (b.y1-b.y0)>=(b.x1-b.x0) and (b.x1-b.x0)>=(b.z1-b.z0):
-               #print("  key yxz,  200:=020 e 020:=200 ")
                key = (b.y1-b.y0+1, b.x1-b.x0+1, b.z1-b.z0+1)
                central000 = CC000[key]
                central200 = CC020[key]
                central020 = CC200[key]
                central002 = CC002[key]
      elif (b.y1-b.y0)>=(b.z1-b.z0) and (b.z1-b.z0)>=(b.x1-b.x0):
-               #print("  key yzx,  200:=002 e 020:=200 e 002:=020")
                key = (b.y1-b.y0+1, b.z1-b.z0+1, b.x1-b.x0+1)
                central000 = CC000[key]
                central200 = CC002[key]
                central020 = CC200[key]
                central002 = CC020[key]
      elif (b.z1-b.z0)>=(b.x1-b.x0) and (b.x1-b.x0)>=(b.y1-b.y0):
-               #print("  key zxy,  200:=020 e 020:=002 e 002:=200")
                key = (b.z1-b.z0+1, b.x1-b.x0+1, b.y1-b.y0+1)
                central000 = CC000[key]
                central200 = CC020[key]
                central020 = CC002[key]
                central002 = CC200[key]
      else: # (b.z1-b.z0)>=(b.y1-b.y0) and (b.y1-b.y0)>=(b.x1-b.x0)
-               #print("  key zyx,  200:=002 e 002:=200")
                key = (b.z1-b.z0+1, b.y1-b.y0+1, b.x1-b.x0+1)
                central000 = CC000[key]
                central200 = CC002[key]
                central020 = CC020[key]
                central002 = CC200[key]
-     ##print("Blocco",b,"chiave",key)
      # compute moments from central ones
      m000 = central000
      m100 = xx*central000
      m010 = yy*central000
      m001 = zz*central000 
-     #print("\t m000=",m000,"\t m100=",m100,"\t m010=",m010,"\t m001=",m001)
      
      m011 = zz*m010
      m101 = xx*m001
      m110 = yy*m100
-     #print("\t m011=",m011,"\t m0101=",m0101,"\t m110=",m110)
           
      m200 = central200 + xx*m100
      m020 = central020 + yy*m010
      m002 = central002 + zz*m001
-     #print("\t m200=",m200,"\t m020=",m020,"\t m002=",m002)
 
      m021 = zz*m020
      m210 = yy*m200
@@ -321,7 +302,7 @@ def blockMoments(ibr):
 
   return MM
    
-# da chiamare subito dopo blockMoments
+# call just after blockMoments to have statistics
 def stampaGestione():
    print("N. Blocks processed with new and with traditional way",NUOVO,VECCHIO)
    #print("Blocchi gestiti col nuovo e col vecchio",NUOVO,VECCHIO)
