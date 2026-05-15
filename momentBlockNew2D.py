@@ -3,19 +3,19 @@ Computation of moments of a 2D image on the block
 decomposition by Spiliotis and Mertzios,
 with the new idea that precomputes central moments.
 
-Optimization level 0:
+Optimization level 0: (raw idea, too slow)
 Compute all central moments of rectangles with
 dimX = 1...max width of a block
 dimY = 1...max height of a block
 and dimX>=dimY
 
-Optimization level 1:
+Optimization level 1: (still slow)
 Compute all central moments of rectangles with
 dimX = 1...max width of a block
 dimY = 1...max height of a block
 (given that max width>=max height, otherwise swap)
 
-Optimization level 2:
+Optimization level 2: (refined idea, good)
 Compute all central moments of rectangles with
 dimX = 1...max width of a block
 dimY = 1...min{8,max height of a block}
@@ -37,9 +37,9 @@ the traditional way
 
 from commons2D import orders
 
-from bigmatrix import PowerMatrix         #APRILE
-#Matrix storing precomputed sums of powers#APRILE
-powers = None                             #APRILE
+from bigmatrix import PowerMatrix
+#Matrix storing precomputed sums of powers
+powers = None
 
 OPT_LEVEL = 2
 LIMIT = 8
@@ -85,9 +85,6 @@ def setCentralMoments(max_side):
   for f in range(1,MoreMax+1):
     sum_full.append(sum_full[f-1]+(f**2))
   
-  #print("Somme mezze", sum_half)
-  #print("Somme intere", sum_full)
-    
   # DY==1 and DX>1
   #print("x in [1,",MoreMax,"] e y=1")
   for edgeX in range(1,MoreMax+1):
@@ -100,10 +97,8 @@ def setCentralMoments(max_side):
        CentrMom20[(edgeX,1)] = 2*sum_full[edgeX//2]
 
   # DY>1 and DX>=DY
-  #print("y in [2,",LessMax,"] e x in [y,",MoreMax,"]")
   for edgeY in range(2,LessMax+1):
       for edgeX in range(edgeY,MoreMax+1):
-         #print("APRILE (b) key",(edgeX,edgeY))
          CentrMom00[(edgeX,edgeY)] = edgeX*edgeY
          if edgeX%2==0: sum_x = sum_half
          else: sum_x = sum_full
@@ -111,26 +106,6 @@ def setCentralMoments(max_side):
          else: sum_y  = sum_full
          CentrMom20[(edgeX,edgeY)] = 2*edgeY*sum_x[edgeX//2]
          CentrMom02[(edgeX,edgeY)] = 2*edgeX*sum_y[edgeY//2]
-         # check
-         """
-         M20, M02 = 0, 0
-         baric = ((edgeX-1)/2, (edgeY-1)/2)
-         for i in range(edgeX):
-           for j in range(edgeY):
-             xi = i-baric[0]
-             yj = j-baric[1]
-             M20 += (xi*xi)
-             M02 += (yj*yj)
-
-         if CentrMom20[(edgeX,edgeY)] != M20:
-           print("ERRORE!!!!!!!!!!! ",edgeX,edgeY,": mom_2,0 ",CentrMom20[(edgeX,edgeY)], " diverso dal vero ",M20)
-           print("  20: ",2,"*",edgeY,"* sommax[",(edgeX//2),"] che vale ", sum_x[edgeX//2])
-
-         if CentrMom02[(edgeX,edgeY)] != M02:
-           print("ERRORE!!!!!!!!!!! ",edgeX,edgeY,": mom_0,2 ",CentrMom02[(edgeX,edgeY)], " diverso dal vero ",M02)
-           print("  02: ",2,"*",edgeX,"* sommay[",(edgeY//2),"] che vale ", sum_y[edgeY//2]) 
-           #print("  ", 2*edgeX*sum_y[edgeY//2])
-         """
   return (CentrMom00, CentrMom20, CentrMom02)
 
 def preprocessing(ibr):
@@ -177,20 +152,15 @@ def blockMoments(ibr):
   # initialize moments to be computed
   MM = {key:0 for key in orders}
   
-  for p,q in orders:
-        MM[(p,q)] = 0 
-  #print("  num blocchi",len(ibr.block))
-
   global NUOVO
   global VECCHIO 
-  NUOVO,VECCHIO = 0,0 #APRILE
+  NUOVO,VECCHIO = 0,0
 
   for b in ibr.block: # cycle on blocks
 
      if OPT_LEVEL>1:
-       dimens = (b.x1-b.x0+1, b.y1-b.y0+1) #APRILE
-       if min(dimens)>LIMIT: #APRILE faccio al modo vecchio
-         #print("VECCHIO MODO",dimens,ordered)
+       dimens = (b.x1-b.x0+1, b.y1-b.y0+1)
+       if min(dimens)>LIMIT:
          for p,q in orders:
            if p==0: mx = dimens[0]
            else:
@@ -205,12 +175,9 @@ def blockMoments(ibr):
            if (mx or my): MM[(p,q)] += (mx*my)
          VECCHIO += 1
          continue
-     #FINE APRILE   
 
-     #print("NUOVO MODO",dimens,ordered)
      NUOVO += 1
 
-     #print("Momento di ",b, " di ",b.pixel_num(), " pixel")
      # barycenter
      xx = 0.5*(b.x1+b.x0)
      yy = 0.5*(b.y1+b.y0)
@@ -225,8 +192,6 @@ def blockMoments(ibr):
         central00 = CC00[key]
         central20 = CC02[key]
         central02 = CC20[key]
-     #print(' chiave ',key)
-     #print(" mom centr 00 20 02: ",central00,central20,central02)
      # compute moments from central ones
      m00 = central00
      m10 = xx*central00
@@ -238,7 +203,6 @@ def blockMoments(ibr):
      m03 = 3*yy*m02 -2*yy*yy*m01
      m21 = yy*m20
      m12 = xx*m02
-     #print(" mom blocco 00 20 02: ",m00,m20,m02)
      # update image moments
      MM[(0,0)] += m00
      MM[(1,0)] += int(m10)
@@ -253,7 +217,7 @@ def blockMoments(ibr):
       
   return MM
    
-# da chiamare subito dopo blockMoments
+# call just after blockMoments to have statistics
 def stampaGestione():
    print("N. Blocks processed with new and with traditional way",NUOVO,VECCHIO)
    #print("Blocchi gestiti col nuovo e col vecchio",NUOVO,VECCHIO)
