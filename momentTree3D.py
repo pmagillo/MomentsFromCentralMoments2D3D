@@ -1,3 +1,7 @@
+"""
+Computation of moments of a 3D binary image by using an octree,
+according to the algorithm by Wu, Horng and Lee.
+"""
 from commons3D import orders
 from octree import OCT_Tree
 
@@ -16,18 +20,6 @@ def factorG(order, coord, side):
   coord3=coord2*coord
   return coord3*side +1.5*coord2*(side2-side) +coord*side3 -0.5*coord*(3*side2-side) +0.25*(side4-2*side3+side2)
 
-
-def prova(xx,yy,zz,lato):
-  print("Monenti di "+str((xx,yy,zz))+" lato "+str(lato))
-  #(0,0) lato 1 ok, lato 2 ok
-  #(1,2) lato 1 ok, lato 2 ok
-  for p in range(4):
-    for q in range(4):
-      for r in range(4):
-        if p+q>3: continue
-        mom = factorG(p, xx, lato)*factorG(q, yy, lato)*factorG(r, zz, lato)
-        print("Momento ",p,q,"   = ", mom)
-  
   
 def octreeMoments(OT):
   """
