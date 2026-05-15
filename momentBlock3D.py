@@ -16,6 +16,11 @@ def preprocessing(ibr):
   global powers
   powers = PowerMatrix( 3, ibr.origsize )
 
+def preprocessing_once(max_side):
+  #assert isinstance(ibr,BW_BlockImage2D)
+  global powers
+  powers = PowerMatrix( 3, max_side )
+
 def blockMoments(ibr):
   """
   Compute all moments m_{p,q,r} for p,q,r>=0 and p+q+r<=3
@@ -28,7 +33,7 @@ def blockMoments(ibr):
   for p,q,r in orders:
         #print("calcolo momenti ordine ",p,q,r)
         # value of moment
-        MM[(p,q,r)] = 0 
+        #MM[(p,q,r)] = 0 
         #print("  num blocchi",len(ibr.block))
         #print()
         for b in ibr.block: # cycle on blocks
@@ -48,19 +53,7 @@ def blockMoments(ibr):
               mz = powers.valueSum(r, b.z1)
               if b.z0>0:
                  mz -= powers.valueSum(r, b.z0-1)
-            #print("   Blocco ",b," ha contributi=",(mx,my,mz), mx*my*mz)
-            """
-            if (p,q,r)==(0,0,0) and mx*my*mz != b.pixel_num():
-                print(" Su x: dovrei avere ",b.x1-b.x0+1," e ho ",mx)
-                if b.x0>1: print("   = ",powers.valueSum(p, b.x1)," - ",powers.valueSum(p, b.x0-1))
-                else: print("   = ",powers.valueSum(p, b.x1))
-                print(" Su y: dovrei avere ",b.y1-b.y0+1," e ho ",my)
-                if b.y0>1: print("   = ",powers.valueSum(q, b.y1)," - ",powers.valueSum(q, b.y0-1))
-                else: print("   = ",powers.valueSum(q, b.y1))
-                print(" Su z: dovrei avere ",b.z1-b.z0+1," e ho ",mz)
-                if b.z0>1: print("   = ",powers.valueSum(r, b.z1)," - ",powers.valueSum(r, b.z0-1))
-                else: print("   = ",powers.valueSum(r, b.z1))
-            """    
+  
             if (mx or my or mz):
                  MM[(p,q,r)] += (mx*my*mz)
   return MM
