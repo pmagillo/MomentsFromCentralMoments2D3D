@@ -1,39 +1,142 @@
 EXPERIMENTS
 
-====Data
 
-Experiments are performed on 3 data sets:
+INPUT DATA
+Experiments are performed on two data sets:
 
-1)
-6 classes of 2D images from
-https://dabi.temple.edu/external/shape/MPEG7/MPEG7dataset.zip
-(20 images in each class)
+1) 2D binary inages obtained by discretizing vector graphics, respresenting variants of the drawn number "50".
+Each drawing was discretized into a 2D image with side length equal to 512,1024,2048 and 4096
+Inputs are in folder: DATA_2D
 
-we exchanged black and white to have black foreground
-and we converted to text format (in order to process them with basic 
-python without extra packages and conform to 3D format)
+2) 3D binary images obtained by discretizing 3D shapes from the repository that was available
+at  http://visionair.ge.imati.cnr.it/ (downloaded in 2022, the address is no longer working).
+Each shape (given as closed triangle mesh) was discretized into a 3D image with side length equal to 128,256,512 and 1024
+Input are in folder: DATA_3D
 
-Inputs are in folder: FileMpeg
+Experiments were performed to measure the execution time of the various stages of moment computation, with the two different algorithms, with our without precomputation of central moments.
 
-2)
-1 2D image from each of the six classes, rescaled
-to have side length = 500,1000,2000,4000 pixels
+Measures were take by exploiting the profiling utilities:
+   python3 -m cProfile <pythonsource.py> <commandlineparameters>
+   
 
-Input are in folder: FileScaledMpeg
+HOW TO USE THE TEST PROGRAMS
+There are four test scripts:
+  testTree2D.py   textBlocks2D.py
+  testTree3D.py   textBlocks3D.py
 
-3)
-We considered six 3D shapes from the repository that was available
-at  http://visionair.ge.imati.cnr.it/ (downloaded in 2022, the
-address is no longer working).
+Tree or Block refer to the type of image decomposition:
+quadtree/octree or block decomposition
 
-Each shape (given as closed triangle mesh) was discretized into
-a 3D image with side length = 64,128,256
+2D or 3D refer to the size of the images
 
-Input are in folder: FileSolid
+WHAT IS EXPECTED ON THE COMMAND-LINE
+The source run without arguments prints instructions.
 
-====Tests
+python3 source.py <stages> <how> <input> <times>
 
-Tests are described in files 
-script_tests2D.txt  for 2D images (FileMpeg and FileScaledMpeg)
-script_tests3D.txt  for 3D images (FileSolid)
+<stages> defines what to perform on the <input>,
+we may perform all three stages of a decomposition based
+algorithm for moment computation (A= building the decomposition,
+B=preprocessing, C=computation), or just stage A, or just B+C
 
+<how> has meaning only for stages B,C and defines how
+to do it, in original version or in optimized version
+
+<input> depends on the stage, for A it is an image, for
+B+C it is an already built decomposition.
+
+Parameters <stages> for all scripts:
+ABC = perform all stages, input is an image, output is moments
+A   = perform just stage A (decompose the object), input is an image,
+      output is decomposition
+BC  = perform just stages BC (preprocessing and moment computation,
+      input is the decomposition, output is moments
+
+Parameters <how>:
+old    = original version of moment computation
+new    = optimized version of moment computation
+newraw = raw optimized version (only for block decomposition and on
+         2D images), tentative version bringing no speed up
+
+Parameters <stages> only for block decomposition:
+ABonceC = perform all stages for many images, with preprocessing
+          executed once, input is a text file containing the maximum
+          image side and the list of images (one on each line)
+BonceC  = perform just stages BC for many block decompositions,
+          with preprocessing executed once, input is a text file 
+          containing the maximum image side and the list of block
+          decompositions
+
+EXAMPLES OF USE FOR 2D IMAGES
+
+Build quadtree and compute moments in all possible ways:
+  python3 testTree2D.py ABC old ./DATA_2D/draw00_512.png
+  python3 testTree2D.py ABC new ./DATA_2D/draw00_512.png
+
+Build quadtree and write it:
+  python3 testTree2D.py A anything ./DATA_2D/draw00_512.png
+(the file draw00_512_tree2D.txt is generated)
+
+Load quadtree and compute moments in all possible ways:
+  python3 testTree2D.py BC old draw00_512_tree2D.txt
+  python3 testTree2D.py BC new draw00_512_tree2D.txt
+
+Build block decomposition and compute moments in all possible ways:
+  python3 testBlocks2D.py ABC old ./DATA_2D/draw00_512.png
+  python3 testBlocks2D.py ABC newraw ./DATA_2D/draw00_512.png
+  python3 testBlocks2D.py ABC new ./DATA_2D/draw00_512.png
+
+Build block decomposition and write it:
+  python3 testBlocks2D.py A anything ./DATA_2D/draw00_512.png
+(the file draw00_512_block2D.txt is generated)
+
+Load block decomposition and compute moments in all possible ways:
+  python3 testBlocks2D.py BC old draw00_512_block2D.txt
+  python3 testBlocks2D.py BC newraw draw00_512_block2D.txt
+  python3 testBlocks2D.py BC new draw00_512_block2D.txt
+
+Build block decomposition and compute moments for many
+images with amortized preprocessing time:
+  python3 testBlocks2D.py ABonceC old listof2Dimages.txt
+  python3 testBlocks2D.py ABonceC new listof2Dimages.txt
+
+Load block decomposition and compute moments for many
+decompositions with amortized preprocessing time:
+  python3 testBlocks2D.py BonceC old listof2Ddecomp.txt
+  python3 testBlocks2D.py BonceC new listof2Ddecomp.txt
+
+EXAMPLES OF USE FOR 3D IMAGES
+
+Build octree and compute moments in all possible ways:
+  python3 testTree3D.py ABC old ./DATA_3D/camel128.vtk
+  python3 testTree3D.py ABC new ./DATA_3D/camel128.vtk
+
+Build quadtree and write it:
+  python3 testTree3D.py A anything ./DATA_3D/camel128.vtk
+(the file camel128_tree3D.txt is generated)
+
+Load quadtree and compute moments in all possible ways:
+  python3 testTree3D.py BC old camel128_tree3D.txt
+  python3 testTree3D.py BC new camel128_tree3D.txt
+
+Build block decomposition and compute moments in all possible ways:
+  python3 testBlocks3D.py ABC old ./DATA_3D/camel128.vtk
+  python3 testBlocks3D.py ABC new ./DATA_3D/camel128.vtk
+
+Build block decomposition and write it:
+  python3 testBlocks3D.py A anything ./DATA_3D/camel128.vtk
+(the file draw00_512_block3D.txt is generated)
+
+Load block decomposition and compute moments in all possible ways:
+  python3 testBlocks3D.py BC old camel128_block3D.txt
+  python3 testBlocks3D.py BC new camel128_block3D.txt
+
+Build block decomposition and compute moments for many
+images with amortized preprocessing time:
+  python3 testBlocks3D.py ABonceC old listof3Dimages.txt
+  python3 testBlocks3D.py ABonceC new listof3Dimages.txt
+
+Load block decomposition and compute moments for many
+decompositions with amortized preprocessing time:
+  python3 testBlocks3D.py BonceC old listof3Ddecomp.txt
+  python3 testBlocks3D.py BonceC new listof3Ddecomp.txt
