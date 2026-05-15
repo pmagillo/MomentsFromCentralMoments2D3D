@@ -1,3 +1,8 @@
+"""
+Computation of moments of a 2D image on the quadtree
+according to  Wu, Horng and Lee, but
+with the new idea that precomputes central moments.
+"""
 from commons2D import orders
 from quadtree import QTR_Tree
 
@@ -27,8 +32,7 @@ def setCentralMoments(max_side):
          sommaQ += ((0.5*t)**2)
     sqr_edge = edge*edge;
     CentrMom0.append(sqr_edge) # mu_00=edge^2
-    CentrMom2.append(int(2*edge*sommaQ)) #CAMBIATO 14 marzo
-    #print("Per ",edge," viene ",CentrMom2[-1])
+    CentrMom2.append(int(2*edge*sommaQ))
     prev_edge = edge
     edge *= 2
   return (CentrMom0, CentrMom2)
@@ -51,31 +55,19 @@ def quadtreeMoments(QT):
     node = QT.leaves[node] 
     if node.color==0: continue
     x,y = node.xcen, node.ycen
-    #s = node.side()
-    #print("Nodo con baricentro ",x,y, " indice",node.exponent)
     m00 = stored0[node.exponent]
-    #assert type(m00) is int #**************
     m10 = x*m00
-    #assert int(m10)==10
     m01 = y*m00
-    #assert int(m01)==m01
     #
     m11 = y*m10 #x*m01
-    #assert int(m11)==m11
     m20 = stored2[node.exponent] + x*m10
-    #assert int(m20)==m20
     m02 = stored2[node.exponent] + y*m01
-    #assert int(m02)==m02
     #    
     m12 = x*m02
-    #assert int(m12)==12
     m21 = y*m20
-    #assert int(m21)==m21
     #
     m30 = 3*x*m20 -2*x*x*m10
-    #assert int(m30)==m30
     m03 = 3*y*m02 -2*y*y*m01
-    #assert int(m03)==m03
 
     MM[(0,0)] += m00
     MM[(1,0)] += int(m10)
