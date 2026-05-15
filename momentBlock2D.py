@@ -16,6 +16,11 @@ def preprocessing(ibr):
   global powers
   powers = PowerMatrix( 3, ibr.origsize )
 
+def preprocessing_once(max_side):
+  #assert isinstance(ibr,BW_BlockImage2D)
+  global powers
+  powers = PowerMatrix( 3, max_side )
+
 def blockMoments(ibr):
   """
   Compute all moments m_{p,q} for p,q>=0 and p+q<=3
@@ -27,7 +32,7 @@ def blockMoments(ibr):
   for p,q in orders:
         #print("calcolo momenti ordine ",p,q)
         # value of moment
-        MM[(p,q)] = 0 
+        #MM[(p,q)] = 0 
         #print("  num blocchi",len(ibr.block))
         for b in ibr.block: # cycle on blocks
             #print("Momento ord ",(p,q), " di ",b, " di ",b.pixel_num(), " pixel")
