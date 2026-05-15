@@ -1,59 +1,78 @@
-====Purpose
+CONTEXT, PURPOSE, REFERENCES
 
-The purpose of this software is computing the moments of 
-order up to three on 2D and 3D images.
+The context is moment computation of binary 2D and 3D images.
+The purpose of this prototype Python code is experimenting an
+optimization for decomposition-based algorithm.
 
-The pythode implements state-of-the-art methods based
-on tree (quadtree in 2D, octree in 3D) and block decomposition,
-and our improved version which precomputes centra moments.
+A decompositon-based algorithm has three stages:
+  A) decompose the image foreground into square or rectangular
+     elements
+  B) precomputation of useful information
+  c) compute the moments of the elements of the decomposition
+     (their sums are the moments of the image)
+The optimization precomputes central moments in stage B and
+uses them to simplify stage C.
 
-====List of source files
+Two schemes of decomposition are used:
+ 1) quadtree/octree, original algorithm described in:
+   C.-H. Wu, S.-J. Horng, P.-Z. Lee,
+   A new computation of shape moments via quadtree decomposition,
+   Pattern Recognition, 34(7), 1319-1330, 2001.
+ 2) block decomposition, original algorithm described in:
+   I.M. Spiliotis, B.G. Mertzios,
+   Real-time computation of two-dimensional moments on binary
+   images using image block representation,
+   IEEE Trans. Image Processing, 7(11), 1609-1615, 1998.
 
-bigmatrix.py  data structure for precomputed sums of powers
-              (used with block decomposition methods)
-commons2D.py  basic I/O functions for 2D images
-commons3D.py  basic I/O functions for 3D images
+LIST OF SOURCE FILES
 
-octree.py     data structure and computation of 2D quadtree
-quadtree.py   data structure and computation of 3D octree
-spiliotis2D.py  data structure and computation of
-                2D block decomposition
-spiliotis3D.py  data structure and computation of
-                3D block decomposition
+image2D.py
+image3D.py
+binimage3D.py
+  2D and 3D images, the latter also in a compact version storing
+  the color of 8 voxels in one byte (to be used for larger images
+  as an altwernative to image3D.py)
 
-momentBlock2D.py  moment computation with
-                  2D block decomposition, state-of-the-art
-momentBlock3D.py  moment computation with
-                  3D block decomposition, state-of-the-art
-momentBlockNew2D.py moment computation with
-                    2D block decomposition, our version
-momentBlockNew3D.py moment computation with
-                    3D block decomposition, our version
-momentTree2D.py   moment computation with
-                  2D quadtree, state-of-the-art
-momentTree3D.py   moment computation with
-                  3D octree, state-of-the-art
-momentTreeNew2D.py  moment computation with
-                    2D quadtree, our version
-momentTreeNew3D.py  moment computation with
-                    3D octree, our version
+reading2D.py
+reading3D.py
+  Functions to read an image from some standard formats.
 
-main_for_tests.py  for executing the tests
-                   (see file EXPERIMENTS.TXT)
+octree.py
+quadtree.py
+  Quadtree/octree and construction
 
-====References
+spiliotis2D.py
+spiliotis3D.py
+  Block decomposition and construction
 
-For moment computation based on quadtree/octree:
-- C.H. Wu, S.J. Horng, P.Z. Lee,
-  A new computation of shape moments via quadtree decomposition,
-  Pattern Recognition 34(7), 2001, 1319--1330.
+momentTree2D.py
+momentTree3D.py
+  Moment computation on quadtree/octree, original version.
 
-For moment computation based on block decomposition:
-- I.M. Spiliotis, B.G. Mertzios, 
-  Real-time computation of 2-D moments on block represented binary
-  images on the scan line array processor,
-  8th European Signal Processing Conference, EUSIPCO, 1996, pp. 1--4.
-- I.M. Spiliotis, B.G. Mertzios, 
-  Real-time computation of two-dimensional moments on binary
-  images using image block representation, 
-  IEEE Trans.  Image Processing 7(11), 1998, 1609--1615.
+momentTreeNew2D.py
+momentTreeNew3D.py
+  Moment computation on quadtree/octree, optimized version.
+
+momentBlock2D.py
+momentBlock3D.py
+  Moment computation on block decomposition, original version.
+
+momentBlockNew2D.py
+momentBlockNew3D.py
+  Moment computation on block decomposition, optimized version.
+
+bigmatrix.py
+  Computation of some values used in stage B.
+  
+commons.py
+commons2D.py
+commons3D.py
+  Utilities dimension-independent and dependent.
+
+testTree2D.py
+testTree3D.py
+  Scripts to compute moments on the quadtree/octree.
+
+testBlocks2D.py
+testBlocks3D.py
+  Scripts to compute moments on the block decomposition.
