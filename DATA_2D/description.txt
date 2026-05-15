@@ -1,0 +1,2 @@
+These binary 2D images are 16 variants of the drawn number 50, obtained by discretizing vector graphics onto a square grid of 512, 1024, 2048 or 4096 pixels per side.
+  
