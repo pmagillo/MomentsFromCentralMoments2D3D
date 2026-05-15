@@ -1,0 +1,2 @@
+3D binary images obtained from the discretization of seven solid objects given as triangle meshes. They have been discretized on a cubic grid of 128, 256, 512, 4096 voxels per side.
+  
