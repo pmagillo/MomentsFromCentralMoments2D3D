@@ -160,7 +160,7 @@ if __name__=="__main__":
     print("   if Bonce the input file contains max_side and list of input files")
     print("Last: number of repetitions (optional, default 1)")
     INPUT = None # to skip next code
-    raise
+    #raise
 
   if INPUT != None:
     if not AMORTIZED:
